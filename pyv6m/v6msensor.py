@@ -32,7 +32,7 @@ def setup_platform(hass, config, add_entities, discover_info=None):
     controller_name = config.get(CONF_CONTROLLER)
     controller = hass.data[controller_name]
     devs = []
-    for sensor in config.get(CONF_SENSORS):
+   for sensor in config.get(CONF_SENSORS):
         # FIX: This should be done differently
         for num, title in sensor.items():
             dev.append(V6MSensor(controller, num, name))

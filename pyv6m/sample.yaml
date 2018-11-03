@@ -1,9 +1,18 @@
+platform: v6m
+  host: 192.168.1.166
+  port: 1234
+  name: bank1
+
 switch:  
   - platform: v6m
-    host: 192.168.1.166
-    port: 1234
+    controller: bank1
     relays:
-      - name: "Sprinkler"
-        addr: 0
-      - name: "Pump"
-        addr: 1
+      - 0: "Sprinkler"
+      - 1: "Pump"
+
+binary_sensor:
+  - platform: v6m
+    controller: bank1
+    sensors:
+      - 0: "Trip wire"
+      - 1: "Motion sensor"
