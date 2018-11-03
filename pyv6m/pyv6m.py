@@ -28,6 +28,7 @@ class V6M(Thread):
     _polling_thread = None
     _socket = None
     _running = False
+    _disconnected = False
 
     def __init__(self, host = '192.168.1.166', port = 1234, relay_callback=None, sensor_callback=None):
         Thread.__init__(self, target = self)
@@ -37,15 +38,18 @@ class V6M(Thread):
         self._sensor_callback = sensor_callback
 
         self._connect()
+        self._polling_thread = Polling(self, POLLING_FREQ)
+        self._polling_thread.start()
         self.start()
 
     def _connect(self):
-        # Add userID and password
-        self._socket = socket.create_connection((self._host, self._port))
-        self._relay_states = [None for _ in range(RELAYS_PER_BOARD)]
-        self._sensor_states = [None for _ in range(SENSORS_PER_BOARD)]
-        self._polling_thread = Polling(self, POLLING_FREQ)
-        self._polling_thread.start()
+        try:
+            self._socket = socket.create_connection((self._host, self._port))
+            self._relay_states = [None for _ in range(RELAYS_PER_BOARD)]
+            self._sensor_states = [None for _ in range(SENSORS_PER_BOARD)]
+            self._disconnected = False
+        except (BlockingIOError, ConnectionError, TimeoutError) as error:
+            _LOGGER.error("Connection: %s", error)
 
     def set_relay(self, addr, state):
         """Turn a relay on/off."""
@@ -76,8 +80,12 @@ class V6M(Thread):
 
     def send(self, command):
         """Send data to the relay controller."""
-        # FIX: If error, reconnect
-        self._socket.send((command+'\r').encode('utf8'))
+        # FIX: If it is a state changing command, perhaps buffer it
+        # until reconnected
+        try:
+            self._socket.send((command+'\r').encode('utf8'))
+        except:
+            self._disconnected = True
 
     def run(self):
         self._running = True
@@ -97,6 +105,9 @@ class V6M(Thread):
                     pass
                 else:
                     data += byte.decode('utf-8')
+            if self._disconnected:
+                self._connect()
+
 
     def _processReceivedData(self, data):
         try:
@@ -108,7 +119,7 @@ class V6M(Thread):
             for sensor in range(len(inp)):
                 self._update_sensor_state(sensor, '1' == inp[sensor])
         except ValueError:
-            pass
+            _LOGGER.error("Weird data: %s", data)
 
     def close(self):
         """Close the connection and running threads."""
