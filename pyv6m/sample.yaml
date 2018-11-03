@@ -1,0 +1,10 @@
+switch:  
+  - platform: pencom
+    host: 192.168.2.55
+    port: 4008
+    boards: 1
+    relays:
+      - name: "Sprinkler"
+        addr: 0
+      - name: "Pump"
+        addr: 1

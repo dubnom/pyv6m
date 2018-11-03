@@ -1,0 +1,6 @@
+cp v6m.py ~/dev/home-assistant/homeassistant/components/switch
+cd ..
+pip uninstall pyv6m
+python3 setup.py sdist bdist_wheel
+pip install dist/pyv6m-0.0.1.tar.gz
+cd pyv6m
