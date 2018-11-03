@@ -7,8 +7,8 @@ import logging
 import voluptuous as vol
 from homeassistant.components.binary_sensor import (
     BinarySensorDevice, PLATFORM_SCHEMA)
-from homeassistant.components.homeworks import (
-    HomeworksDevice)
+from homeassistant.components.v6m import (
+    V6MDevice, DOMAIN)
 from homeassistant.const import CONF_SENSORS
 import homeassistant.helpers.config_validation as cv
 
@@ -22,7 +22,7 @@ CONF_ADDR = 'addr'
 
 SENSOR_SCHEMA = vol.Schema({cv.positive_int: cv.string})
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Optional(CONF_CONTROLLER, default = 'V6M'): cv.string,
+    vol.Optional(CONF_CONTROLLER, default=DOMAIN): cv.string,
     vol.Required(CONF_SENSORS): vol.All(cv.ensure_list, [SENSOR_SCHEMA])
 })
 
@@ -32,10 +32,10 @@ def setup_platform(hass, config, add_entities, discover_info=None):
     controller_name = config.get(CONF_CONTROLLER)
     controller = hass.data[controller_name]
     devs = []
-   for sensor in config.get(CONF_SENSORS):
+    for sensor in config.get(CONF_SENSORS):
         # FIX: This should be done differently
-        for num, title in sensor.items():
-            dev.append(V6MSensor(controller, num, name))
+        for num, name in sensor.items():
+            devs.append(V6MSensor(controller, num, name))
     add_entities(devs, True)
     return True
 
@@ -45,9 +45,9 @@ class V6MSensor(V6MDevice, BinarySensorDevice):
 
     def __init__(self, controller, num, name):
         """Create sensor with addr and name."""
-        HomeworksDevice.__init__(self, controller, num, name)
-        self._num = num
+        V6MDevice.__init__(self, controller, num, name)
         self._state = None
+        controller.register_sensor(self)
 
     @property
     def is_on(self):
@@ -57,9 +57,11 @@ class V6MSensor(V6MDevice, BinarySensorDevice):
     @property
     def device_state_attributes(self):
         """Return supported attributes."""
-        return {"Sensor Number": self._num}
+        return {"Sensor Number": self.num}
 
-    def callback(self, num, old_state, new_state):
+    def callback(self, new_state):
         """Callback to process state change."""
-        self._state = new_state
-        return True
+        if self._state != new_state:
+            self._state = new_state
+            return True
+        return False

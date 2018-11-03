@@ -64,17 +64,15 @@ class V6M(Thread):
 
     def _update_relay_state(self, addr, new_state):
         old_state = self._relay_states[addr]
-        if old_state != new_state:
-            if self._relay_callback:
-                self._relay_callback(addr, old_state, new_state)
-            self._relay_states[addr] = new_state
+        if self._relay_callback:
+            self._relay_callback(addr, old_state, new_state)
+        self._relay_states[addr] = new_state
 
     def _update_sensor_state(self, addr, new_state):
         old_state = self._sensor_states[addr]
-        if old_state != new_state:
-            if self._sensor_callback:
-                self._sensor_callback(addr, old_state, new_state)
-            self._sensor_states[addr] = new_state
+        if self._sensor_callback:
+            self._sensor_callback(addr, old_state, new_state)
+        self._sensor_states[addr] = new_state
 
     def send(self, command):
         """Send data to the relay controller."""

@@ -8,8 +8,7 @@ import voluptuous as vol
 from homeassistant.components.switch import (
     SwitchDevice, PLATFORM_SCHEMA)
 from homeassistant.components.v6m import (
-    V6MDevice)
-from homeassistant.const import CONF_NAME
+    V6MDevice, DOMAIN)
 import homeassistant.helpers.config_validation as cv
 
 _LOGGER = logging.getLogger(__name__)
@@ -24,7 +23,7 @@ CONF_RELAYS = 'relays'
 
 RELAY_SCHEMA = vol.Schema({cv.positive_int: cv.string})
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Optional(CONF_CONTROLLER, default = 'V6M'): cv.string,
+    vol.Optional(CONF_CONTROLLER, default=DOMAIN): cv.string,
     vol.Required(CONF_RELAYS): vol.All(cv.ensure_list, [RELAY_SCHEMA])
 })
 
@@ -34,10 +33,10 @@ def setup_platform(hass, config, add_entities, discover_info=None):
     controller_name = config.get(CONF_CONTROLLER)
     controller = hass.data[controller_name]
     devs = []
-    for sensor in config.get(CONF_SENSORS):
+    for relay in config.get(CONF_RELAYS):
         # FIX: This should be done differently
-        for num, title in sensor.items():
-            dev.append(V6MRelay(controller, num, name))
+        for num, name in relay.items():
+            devs.append(V6MRelay(controller, num, name))
     add_entities(devs, True)
     return True
 
@@ -47,21 +46,31 @@ class V6MRelay(V6MDevice, SwitchDevice):
 
     def __init__(self, controller, num, name):
         """Create switch with num and name."""
-        HomeworksDevice.__init__(self, controller, num, name)
-        self._num = num
+        V6MDevice.__init__(self, controller, num, name)
         self._state = None
+        controller.register_relay(self)
 
     @property
     def is_on(self):
-        """Return state of the sensor."""
+        """Return state of the relay."""
         return self._state
+
+    def turn_on(self):
+        """Turn on the relay."""
+        self._controller.set_relay(self.num, True)
+
+    def turn_off(self):
+        """Turn off the relay."""
+        self._controller.set_relay(self.num, False)
 
     @property
     def device_state_attributes(self):
         """Return supported attributes."""
-        return {"Sensor Number": self._num}
+        return {"Sensor Number": self.num}
 
-    def callback(self, num, old_state, new_state):
+    def callback(self, new_state):
         """Callback to process state change."""
-        self._state = new_state
-        return True
+        if self._state != new_state:
+            self._state = new_state
+            return True
+        return False

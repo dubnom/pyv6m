@@ -6,7 +6,7 @@ Michael Dubno - 2018 - New York
 import logging
 import voluptuous as vol
 from homeassistant.const import (
-    EVENT_HOMEASSISTANT_STOP, CONF_HOST, CONF_PORT)
+    EVENT_HOMEASSISTANT_STOP, CONF_HOST, CONF_PORT, CONF_NAME)
 import homeassistant.helpers.config_validation as cv
 
 REQUIREMENTS = ['pyv6m==0.0.1']
@@ -19,6 +19,7 @@ CONFIG_SCHEMA = vol.Schema({
     DOMAIN: vol.Schema({
         vol.Required(CONF_HOST): cv.string,
         vol.Required(CONF_PORT): cv.port,
+        vol.Optional(CONF_NAME, default=DOMAIN): cv.string,
     }),
 }, extra=vol.ALLOW_EXTRA)
 
@@ -32,28 +33,45 @@ def setup(hass, base_config):
 
         def __init__(self, host, port):
             """Host and port of the controller."""
-            V6M.__init__(self, host, port, self._callback, self._callback)
-            self._subscribers = {}
+            V6M.__init__(self, host, port, self.relay_callback,
+                         self.sensor_callback)
+            self._relay_subs = {}
+            self._sensor_subs = {}
 
-        def register(self, device):
+        def register_relay(self, device):
             """Add a device to subscribe to events."""
-            if device.addr not in self._subscribers:
-                self._subscribers[device.addr] = []
-            self._subscribers[device.addr].append(device)
+            self._register(self._relay_subs, device)
 
-        def _callback(self, addr, old_state, new_state):
-            _LOGGER.debug('_callback: %s, %s', addr, old_state, new_state)
-            for sub in self._subscribers.get(addr, old_state, new_state):
-                _LOGGER.debug("_callback: %s", sub)
-                if sub.callback(old_state, new_state):
-                    sub.schedule_update_ha_state()
+        def relay_callback(self, num, old_state, new_state):
+            """Process relay states."""
+            self._dispatch(self._relay_subs, num, new_state)
+
+        def register_sensor(self, device):
+            """Add a device to subscribe to events."""
+            self._register(self._sensor_subs, device)
+
+        def sensor_callback(self, num, old_state, new_state):
+            """Process sensor states."""
+            self._dispatch(self._sensor_subs, num, new_state)
+
+        def _register(self, subs, device):
+            if device.num not in subs:
+                subs[device.num] = []
+            subs[device.num].append(device)
+
+        def _dispatch(self, subs, num, new_state):
+            if num in subs:
+                for sub in subs[num]:
+                    if sub.callback(new_state):
+                        sub.schedule_update_ha_state()
+
 
     config = base_config.get(DOMAIN)
     host = config[CONF_HOST]
     port = config[CONF_PORT]
 
     controller = V6MController(host, port)
-    hass.data[V6M_CONTROLLER] = controller
+    hass.data[config[CONF_NAME]] = controller
 
     def cleanup(event):
         controller.close()
@@ -63,19 +81,18 @@ def setup(hass, base_config):
 
 
 class V6MDevice():
-    """Base class of a Homeworks device."""
+    """Base class of a V6M device."""
 
-    def __init__(self, controller, addr, name):
+    def __init__(self, controller, num, name):
         """Controller, address, and name of the device."""
-        self._addr = addr
+        self._num = num
         self._name = name
         self._controller = controller
-        controller.register(self)
 
     @property
-    def addr(self):
-        """Device address."""
-        return self._addr
+    def num(self):
+        """Device number."""
+        return self._num
 
     @property
     def name(self):
@@ -85,8 +102,4 @@ class V6MDevice():
     @property
     def should_poll(self):
         """No need to poll."""
-        return False
-
-    def callback(self, msg_type, values):
-        """Must be replaced with device callbacks."""
         return False

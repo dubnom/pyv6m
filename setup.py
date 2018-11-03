@@ -4,14 +4,14 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="pyvm6",
+    name="pyv6m",
     version="0.0.1",
     author="Michael Dubno",
     author_email="michael@dubno.com",
-    description="VM6 relay controller over Ethernet",
+    description="V6M relay controller over Ethernet",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/dubnom/pyvm6",
+    url="https://github.com/dubnom/pyv6m",
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
