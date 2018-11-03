@@ -12,11 +12,11 @@ The remaining relays are left unchanged:
     setr=1x0xxxxxx
 
 The board supports other controls:
-    '0' - off
-    '1' - on
-    '2' - pulse (on, delay, off)
-    '3' - toggle
-    '4' - group 2 relays adjacent relays.  On if '4x', off if 'x4'.
+* '0' - off
+* '1' - on
+* '2' - pulse (on, delay, off)
+* '3' - toggle
+* '4' - group 2 relays adjacent relays.  On if '4x', off if 'x4'.
     
 This package only supports turning relays on and off through the
 V6M.set_relay method.

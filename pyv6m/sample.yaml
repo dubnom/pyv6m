@@ -1,8 +1,7 @@
 switch:  
-  - platform: pencom
-    host: 192.168.2.55
-    port: 4008
-    boards: 1
+  - platform: v6m
+    host: 192.168.1.166
+    port: 1234
     relays:
       - name: "Sprinkler"
         addr: 0
