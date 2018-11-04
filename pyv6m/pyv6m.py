@@ -38,7 +38,7 @@ class V6M(Thread):
 
         self._connect()
         if self._socket == None:
-            raise
+            raise ConnectionError("Couldn't connect to '%s:%d'" % (host, port))
         self._polling_thread = Polling(self, POLLING_FREQ)
         self._polling_thread.start()
         self.start()
