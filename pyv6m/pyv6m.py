@@ -81,10 +81,10 @@ class V6M(Thread):
     def send(self, command):
         """Send data to the relay controller."""
         # FIX: If it is a state changing command, perhaps buffer it
-        # until reconnected
+        # until reconnected?
         try:
             self._socket.send((command+'\r').encode('utf8'))
-        except:
+        except ConnectionError:
             self._disconnected = True
 
     def run(self):
