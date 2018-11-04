@@ -28,7 +28,6 @@ class V6M(Thread):
     _polling_thread = None
     _socket = None
     _running = False
-    _disconnected = False
 
     def __init__(self, host = '192.168.1.166', port = 1234, relay_callback=None, sensor_callback=None):
         Thread.__init__(self, target = self)
@@ -38,6 +37,8 @@ class V6M(Thread):
         self._sensor_callback = sensor_callback
 
         self._connect()
+        if self._socket == None:
+            raise
         self._polling_thread = Polling(self, POLLING_FREQ)
         self._polling_thread.start()
         self.start()
@@ -47,7 +48,6 @@ class V6M(Thread):
             self._socket = socket.create_connection((self._host, self._port))
             self._relay_states = [None for _ in range(RELAYS_PER_BOARD)]
             self._sensor_states = [None for _ in range(SENSORS_PER_BOARD)]
-            self._disconnected = False
         except (BlockingIOError, ConnectionError, TimeoutError) as error:
             _LOGGER.error("Connection: %s", error)
 
@@ -80,34 +80,35 @@ class V6M(Thread):
 
     def send(self, command):
         """Send data to the relay controller."""
-        # FIX: If it is a state changing command, perhaps buffer it
-        # until reconnected?
         try:
             self._socket.send((command+'\r').encode('utf8'))
-        except ConnectionError:
-            self._disconnected = True
+            return True
+        except (ConnectionError, AttributeError):
+            self._socket = None
+            return False
 
     def run(self):
         self._running = True
         data = ''
         while self._running:
-            try:
-                readable, _, _ = select.select([self._socket], [], [], POLLING_FREQ)
-            except socket.error as err:
-                raise
-            if len(readable) != 0:
-                byte = self._socket.recv(1)
-                if byte == b'}':
-                    data += byte.decode('utf-8')
-                    self._processReceivedData(data.strip())
-                    data = ''
-                elif byte == b'\r' or byte == b'\t':
-                    pass
-                else:
-                    data += byte.decode('utf-8')
-            if self._disconnected:
+            if self._socket == None:
+                time.sleep(POLLING_FREQ)
                 self._connect()
-
+            else:
+                try:
+                    readable, _, _ = select.select([self._socket], [], [], POLLING_FREQ)
+                    if len(readable) != 0:
+                        byte = self._socket.recv(1)
+                        if byte == b'}':
+                            data += byte.decode('utf-8')
+                            self._processReceivedData(data.strip())
+                            data = ''
+                        elif byte == b'\r' or byte == b'\t':
+                            pass
+                        else:
+                            data += byte.decode('utf-8')
+                except (ConnectionError, AttributeError):
+                    self._socket = None
 
     def _processReceivedData(self, data):
         try:
