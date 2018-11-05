@@ -120,7 +120,7 @@ class V6M(Thread):
             for sensor in range(len(inp)):
                 self._update_sensor_state(sensor, '1' == inp[sensor])
         except ValueError:
-            _LOGGER.error("Weird data: %s", data)
+            _LOGGER.warning("Weird data: %s", data)
 
     def close(self):
         """Close the connection and running threads."""
