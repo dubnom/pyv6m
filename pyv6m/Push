@@ -1,6 +1,4 @@
-cp v6m.py ~/dev/home-assistant/homeassistant/components
-cp v6mrelay.py ~/dev/home-assistant/homeassistant/components/switch/v6m.py
-cp v6msensor.py ~/dev/home-assistant/homeassistant/components/binary_sensor/v6m.py
+cp -r ha/ ~/dev/home-assistant/homeassistant/components
 cd ..
 pip uninstall pyv6m
 python3 setup.py sdist bdist_wheel
