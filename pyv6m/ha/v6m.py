@@ -1,7 +1,7 @@
-"""
-Support for controlling v6m relays and sensors.
+"""Component to control v6m relays and sensors.
 
-Michael Dubno - 2018 - New York
+For more details about this component, please refer to the documentation at
+https://home-assistant.io/components/v6m/
 """
 import logging
 import voluptuous as vol
@@ -64,7 +64,6 @@ def setup(hass, base_config):
                 for sub in subs[num]:
                     if sub.callback(new_state):
                         sub.schedule_update_ha_state()
-
 
     config = base_config.get(DOMAIN)
     host = config[CONF_HOST]

@@ -1,7 +1,7 @@
-"""
-Support for V6M sensors.
+"""Component to read v6m sensors.
 
-Michael Dubno - 2018 - New York
+For more details about this component, please refer to the documentation at
+https://home-assistant.io/components/v6m/
 """
 import logging
 import voluptuous as vol
@@ -60,7 +60,7 @@ class V6MSensor(V6MDevice, BinarySensorDevice):
         return {"Sensor Number": self.num}
 
     def callback(self, new_state):
-        """Callback to process state change."""
+        """Process state changes."""
         if self._state != new_state:
             self._state = new_state
             return True

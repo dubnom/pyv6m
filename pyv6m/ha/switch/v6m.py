@@ -1,7 +1,7 @@
-"""
-Support for V6M relays.
+"""Component to control v6m relays.
 
-Michael Dubno - 2018 - New York
+For more details about this component, please refer to the documentation at
+https://home-assistant.io/components/v6m/
 """
 import logging
 import voluptuous as vol
@@ -56,11 +56,11 @@ class V6MRelay(V6MDevice, SwitchDevice):
         return self._state
 
     def turn_on(self):
-        """Turn on the relay."""
+        """Turn relay on."""
         self._controller.set_relay(self.num, True)
 
     def turn_off(self):
-        """Turn off the relay."""
+        """Turn relay off."""
         self._controller.set_relay(self.num, False)
 
     @property
@@ -69,7 +69,7 @@ class V6MRelay(V6MDevice, SwitchDevice):
         return {"Sensor Number": self.num}
 
     def callback(self, new_state):
-        """Callback to process state change."""
+        """Process state changes."""
         if self._state != new_state:
             self._state = new_state
             return True
