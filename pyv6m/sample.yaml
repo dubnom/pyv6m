@@ -7,12 +7,12 @@ switch:
   - platform: v6m
     controller: bank1
     relays:
-      - 0: "Sprinkler"
-      - 1: "Pump"
+        0: "Sprinkler"
+        1: "Pump"
 
 binary_sensor:
   - platform: v6m
     controller: bank1
     sensors:
-      - 0: "Trip wire"
-      - 1: "Motion sensor"
+        0: "Trip wire"
+        1: "Motion sensor"

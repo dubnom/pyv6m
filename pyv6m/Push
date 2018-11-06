@@ -2,9 +2,3 @@ target=~/dev/home-assistant/homeassistant/components
 cp ha/v6m.py $target
 cp ha/switch/v6m.py $target/switch
 cp ha/binary_sensor/v6m.py $target/binary_sensor
-cd ..
-pip uninstall pyv6m
-python3 setup.py sdist bdist_wheel
-twine upload dist/*
-pip install pyv6m
-cd pyv6m
